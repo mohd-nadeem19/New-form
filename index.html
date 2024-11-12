@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Form to Backend</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    input,
+    button {
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    .output {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>User Information Form</h2>
+
+  <form id="userForm">
+    <!-- Name input field -->
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" placeholder="Enter your name" required><br>
+
+    <!-- City input field -->
+    <label for="city">City:</label>
+    <input type="text" id="city" name="city" placeholder="Enter your city" required><br>
+
+    <!-- Age input field -->
+    <label for="age">Age:</label>
+    <input type="number" id="age" name="age" placeholder="Enter your age" required><br>
+
+    <!-- Submit button -->
+    <button type="button" onclick="submitForm()">Submit</button>
+  </form>
+
+  <div class="output" id="outputDiv"></div>
+
+  <script>
+    // // पेज लोड होते ही सभी डेटा दिखाने के लिए
+    window.onload = async function () {
+      await getData();  // पेज लोड होने पर सभी डेटा दिखाना
+    };
+
+    // Firebase से सभी डेटा प्राप्त करना
+    let dataStore = [];
+    async function getData() {
+      const data = await fetch("https://todolist-548e6-default-rtdb.firebaseio.com/principal.json");
+      const gotData = await data.json();
+
+      // पहले से मौजूद डेटा को साफ़ करें
+      dataStore = [];
+
+      // सभी डेटा को dataStore में डालें
+      for (const key in gotData) {
+        if (gotData[key]) {
+          dataStore.push({ id: key, ...gotData[key] });
+        }
+      }
+
+      console.log(dataStore);
+      displayData(dataStore); // नया डेटा दिखाना
+    }
+
+    // डेटा को HTML में दिखाने की फंक्शन
+    function displayData(data) {
+      const outputDiv = document.getElementById("outputDiv");
+
+      // पहले से मौजूद डेटा को साफ़ करें
+      outputDiv.innerHTML = "";
+
+      // सभी डेटा को outputDiv में दिखाएं
+      data.forEach(item => {
+        const div = document.createElement("div");
+        div.innerHTML = `<p>Name: ${item.name}</p><p>City: ${item.city}</p><p>Age: ${item.age}</p>`;
+        outputDiv.appendChild(div);
+      });
+    }
+
+    // फॉर्म सबमिट करने पर नया डेटा Firebase में भेजना
+    async function submitForm() {
+      const name = document.getElementById("name").value;
+      const city = document.getElementById("city").value;
+      const age = document.getElementById("age").value;
+
+      // अगर किसी भी फील्ड में डेटा नहीं है तो अलर्ट दिखाएं
+      if (name === "" || city === "" || age === "") {
+        alert("कृपया सभी फील्ड्स भरें।");
+        return;
+      }
+
+      const formData = {
+        name: name,
+        age: age,
+        city: city,
+      };
+
+      // Firebase में डेटा पोस्ट करना
+      async function postData() {
+        const result = await fetch("https://todolist-548e6-default-rtdb.firebaseio.com/principal.json", {
+          method: "POST",
+          body: JSON.stringify(formData),
+          headers: {
+            "Content-type": "application/json",
+          },
+        });
+        const actualResult = await result.json();
+        console.log(actualResult);
+      }
+
+      // सबसे पहले नया डेटा पोस्ट करें
+      await postData();
+
+      // फिर सभी डेटा लाकर दिखाएं (जो पुराने और नए डेटा को जोड़कर होगा)
+      await getData();
+
+      // फॉर्म के इनपुट फील्ड्स को साफ़ करें
+      document.getElementById("name").value = "";
+      document.getElementById("city").value = "";
+      document.getElementById("age").value = "";
+    }
+
+  </script>
+
+
+</body>
+
+</html>
